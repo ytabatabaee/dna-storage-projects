@@ -2,6 +2,7 @@ import editdistance
 import matplotlib.pyplot as plt
 import sys
 import timeit
+import distance 
 
 # config
 EDIT_DIST_THRESHOLD = 3
@@ -16,10 +17,10 @@ def read_sequences(file_name):
     sequences = []
     with open(file_name) as fh:
         while True:
-            fh.readline() 
+            #fh.readline() 
             seq = fh.readline().rstrip() # read sequence
-            fh.readline()
-            fh.readline()
+            #fh.readline()
+            #fh.readline()
             if len(seq) == 0:
                 break
             if 'N' not in seq:
@@ -49,8 +50,9 @@ def approximate_match(pl, pr, t, threshold=EDIT_DIST_THRESHOLD):
     p1, p2 = -1, -1
     min_dist = len(pl)
     for i in range(len(t) - len(pl) + 1):
-        if editdistance.eval(t[i:i + len(pl)], pl) <= min_dist:
-            min_dist = editdistance.eval(t[i:i + len(pl)], pl)
+        ed = editdistance.eval(t[i:i + len(pl)], pl)
+        if ed <= min_dist:
+            min_dist = ed
             if min_dist <= threshold:
                 p1 = i  
             if min_dist == 0:
@@ -60,8 +62,9 @@ def approximate_match(pl, pr, t, threshold=EDIT_DIST_THRESHOLD):
     
     min_dist = len(pr)
     for i in reversed(range(len(t) - len(pr) + 1)):
-        if editdistance.eval(t[i:i + len(pr)], pr) <= min_dist:
-            min_dist = editdistance.eval(t[i:i + len(pr)], pr)
+        ed = editdistance.eval(t[i:i + len(pr)], pr)
+        if ed <= min_dist:
+            min_dist = ed
             if min_dist <= threshold:
                 p2 = i  
             if min_dist == 0:
@@ -105,14 +108,11 @@ def extract_payloads(primer1, primer2, reads_file_name):
     print('5->3 strands count', direct_count)
     print('3->5 strands count', rev_count)
     print('percentage of excluded strands:', (1 - (direct_count + rev_count) / len(reads))* 100)
-    # print(hist)
-    #plt.plot(range(int(0.9 * STRAND_LEN), int(1.1 * STRAND_LEN)), hist[int(0.9 * STRAND_LEN):int(1.1 * STRAND_LEN)])
-    #plt.title('distribution of strands lengths')
-    #plt.show()
+    return len(reads)
 
 if __name__ == "__main__": 
     primer1, primer2 = read_primers(PRIMERS_FILE)  
     start = timeit.default_timer()
-    extract_payloads(primer1, primer2, READS_FILE)
+    len_reads = extract_payloads(primer1, primer2, READS_FILE)
     stop = timeit.default_timer()
-    print('Time (sec): ', stop - start)
+    print('strands/sec: ', len_reads/(stop - start))
