@@ -28,13 +28,10 @@ def read_refs(file_name):
     refs = []
     with open(file_name) as fh:
         while True:
-            idx = fh.readline().rstrip() # index and primers
-            if len(idx) == 0:
-                break
-            idx = idx.split('_')
+            idx = fh.readline() # index and primers
             seq = fh.readline().rstrip()[PRIMER_LEN:-PRIMER_LEN] # sequence
-            #p1 = idx[2]
-            #p2 = idx[3]
+            if len(seq) == 0:
+                break
             refs.append(seq)
     return refs
 
@@ -80,8 +77,9 @@ def extract_noisy_copy(seq, ref, pos):
     
     # removing junks at the beginning
     while True:
-        p += 1
-        # if seq[p:p + l] == ref:
+        if editdistance.eval(seq[p+1:p+l], ref):
+            
+            
             
         
     # removing junks at the end
@@ -92,7 +90,7 @@ def extract_noisy_copy(seq, ref, pos):
 def find_reference(seq, refs):
     '''find the reference strand for sequence seq'''
     print('--------')
-    for [r, _, _] in refs:
+    for r in refs:
         r_rev = reverse_complement(r)
         pos = approximate_match(r, seq)
         if pos != -1:
