@@ -37,6 +37,17 @@ def read_refs(file_name):
     return list(set(refs))
 
 
+def write_refs_clusters(refs, clusters):
+    '''write references and clusters to file'''
+    with open('data/reference.txt', 'w') as fr:
+        for i in range(len(refs)):
+            r = refs[i]
+            fr.write(r + "\n")
+            with open('data/' + str(i) + '.txt', 'w') as fc:
+                for c in clusters[r]:
+                    fc.write(c + "\n")
+                        
+
 def reverse_complement(seq):
     base_pairs = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
     return ''.join(base_pairs.get(base, base) for base in reversed(seq))
@@ -79,8 +90,8 @@ def extract_noisy_copy(seq, ref, pos):
     l = len(ref)
     p = pos
     min_dist = editdistance.eval(seq[p:p + l], ref)
-    print(seq[p:p + l])
-    print(min_dist)
+    #print(seq[p:p + l])
+    #print(min_dist)
     
     for i in range(-10, 10):
         for j in range(-10, 10):
@@ -89,31 +100,51 @@ def extract_noisy_copy(seq, ref, pos):
                 min_dist = ed
                 l = len(seq[pos+i:pos+l+j])
                 p = pos+i
-    print(seq[p:p + l])
-    print(min_dist)
+    #print(seq[p:p + l])
+    #print(min_dist)
     return seq[p:p + l]    
     
     
 def find_reference(seq, refs):
     '''find the reference strand for sequence seq'''
     # TODO: how should we handle reverse complement refs? should they form one cluster?
-    print('--------')
+    #print('--------')
     for r in refs:
         s_rev = reverse_complement(seq)
         pos = approximate_match(r, seq)
         if pos != -1:
-            print(pos)
-            print("origin", r)
-            print("strand", seq[pos:pos+len(r)])
+            #print(pos)
+            #print("origin", r)
+            #print("strand", seq[pos:pos+len(r)])
             return seq, r, pos
         else:
             pos = approximate_match(r, s_rev)
             if pos != -1:
-                print(pos)
-                print("origin", r)
-                print("strand", s_rev[pos:pos+len(r)])
+                #print(pos)
+                #print("origin", r)
+                #print("strand", s_rev[pos:pos+len(r)])
                 return s_rev, r, pos
     return None
+
+
+def extract_clusters(seqs, refs):
+    clusters = dict()
+    for r in refs:
+        clusters[r] = [] 
+     
+    for seq in seqs[:20]:
+        try:
+            s, r, pos = find_reference(seq, refs)
+        except:
+            continue
+        noisy_copy = extract_noisy_copy(s, r, pos) 
+        clusters[r].append(noisy_copy)
+        print(r)
+        print(noisy_copy)
+        print('---')
+    
+    return clusters
+    
 
 
 
