@@ -5,7 +5,7 @@ import timeit
 import distance 
 import numpy as np
 
-EDIT_DIST_THRESHOLD = 20
+EDIT_DIST_THRESHOLD = 25
 PRIMER_LEN = 25
 
 def read_sequences(file_name):
@@ -25,6 +25,7 @@ def read_sequences(file_name):
 
 
 def read_refs(file_name):
+    '''reading references payloads'''
     refs = []
     with open(file_name) as fh:
         while True:
@@ -34,6 +35,7 @@ def read_refs(file_name):
                 break
             refs.append(seq)
     return refs
+
 
 def reverse_complement(seq):
     base_pairs = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
@@ -59,7 +61,7 @@ def get_length_histogram(seqs, max_len = 1200):
 
 
 def approximate_match(p, t, threshold=EDIT_DIST_THRESHOLD):
-    '''approximate matching with edit distance'''
+    '''approximate matching with edit distance (finding p in t)'''
     pos = -1
     min_dist = len(p)
     for i in range(len(t) - len(p) + 1):
@@ -71,22 +73,49 @@ def approximate_match(p, t, threshold=EDIT_DIST_THRESHOLD):
 
 
 def extract_noisy_copy(seq, ref, pos):
+    # TODO: this is very naive, should be optimized
     l = len(ref)
     p = pos
     min_dist = editdistance.eval(seq[p:p + l], ref)
+    print(seq[p:p + l])
+    print(min_dist)
     
     # removing junks at the beginning
     while True:
-        if editdistance.eval(seq[p+1:p+l], ref):
-            
-            
-            
-        
-    # removing junks at the end
-    
+        ed = editdistance.eval(seq[p+1:p+l], ref) 
+        if ed < min_dist:
+            print(ed)
+            p += 1
+            l -= 1
+            min_dist = ed
+        else:
+            break
+    print(seq[p:p + l])
+
     # extending to cover potential omitted neucleotides
-
-
+    while True:
+        ed = editdistance.eval(seq[p:p+l+1], ref) 
+        if ed < min_dist:
+            print(ed)
+            l += 1
+            min_dist = ed
+        else:
+            break
+    print(seq[p:p + l])
+    
+    # removing junks at the end
+    while True:
+        ed = editdistance.eval(seq[p:p+l-1], ref)
+        if ed < min_dist:
+            print(ed)
+            l -= 1
+            min_dist = ed
+        else:
+            break     
+    print(seq[p:p + l])
+    
+    
+    
 def find_reference(seq, refs):
     '''find the reference strand for sequence seq'''
     print('--------')
@@ -97,14 +126,15 @@ def find_reference(seq, refs):
             print(pos)
             print("origin", r)
             print("strand", seq[pos:pos+len(r)])
-            return
+            return pos, r
         else:
             pos = approximate_match(r_rev, seq)
             if pos != -1:
                 print(pos)
                 print("origin", r_rev)
                 print("strand", seq[pos:pos+len(r)])
-                return
+                return pos, r
+    return None
 
 
 
