@@ -7,6 +7,8 @@ import numpy as np
 
 EDIT_DIST_THRESHOLD = 25
 PRIMER_LEN = 25
+REFS_FILE = sys.argv[1]
+SEQS_FILE = sys.argv[2]
 
 def read_sequences(file_name):
     '''read sequences from fastq file'''
@@ -21,7 +23,7 @@ def read_sequences(file_name):
                 break
             if 'N' not in seq:
                 sequences.append(seq)
-    return sequences
+    return list(set(sequences))
 
 
 def read_refs(file_name):
@@ -43,7 +45,7 @@ def write_refs_clusters(refs, clusters):
         for i in range(len(refs)):
             r = refs[i]
             fr.write(r + "\n")
-            with open('data/' + str(i) + '.txt', 'w') as fc:
+            with open('data/clusters/' + str(i) + '.txt', 'w') as fc:
                 for c in clusters[r]:
                     fc.write(c + "\n")
                         
@@ -68,6 +70,12 @@ def get_length_histogram(seqs, max_len = 1200):
     hist = [0]*max_len
     for s in seqs:
         hist[len(s)] += 1 
+    return hist
+
+def get_cluster_distribution(clusters, max_len = 150):
+    hist = [0]*max_len
+    for c in clusters:
+        hist[len(clusters[c])] += 1 
     return hist 
 
 
@@ -132,21 +140,29 @@ def extract_clusters(seqs, refs):
     for r in refs:
         clusters[r] = [] 
      
-    for seq in seqs[:20]:
+    for seq in seqs[:300]:
         try:
             s, r, pos = find_reference(seq, refs)
         except:
             continue
         noisy_copy = extract_noisy_copy(s, r, pos) 
         clusters[r].append(noisy_copy)
-        print(r)
-        print(noisy_copy)
-        print('---')
+        #print(r)
+        #print(noisy_copy)
+        #print('---')
     
     return clusters
-    
 
-
-
-        
-    
+if __name__ == "__main__": 
+    seqs = read_sequences(SEQS_FILE)
+    refs = read_refs(REFS_FILE) 
+    print(len(refs))
+    print(len(seqs))
+    print('finished reading data')
+    start = timeit.default_timer()
+    clusters = extract_clusters(seqs, refs)
+    hist = get_cluster_distribution(clusters)
+    print(hist)
+    print("processing time: ", (stop - start))
+    write_refs_clusters(refs, clusters)
+    stop = timeit.default_timer()
