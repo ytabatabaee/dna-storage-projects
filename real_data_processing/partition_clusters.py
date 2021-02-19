@@ -140,7 +140,7 @@ def extract_clusters(seqs, refs):
     for r in refs:
         clusters[r] = [] 
      
-    for seq in seqs[:300]:
+    for seq in seqs:
         try:
             s, r, pos = find_reference(seq, refs)
         except:
