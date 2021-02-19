@@ -34,7 +34,7 @@ def read_refs(file_name):
             if len(seq) == 0:
                 break
             refs.append(seq)
-    return refs
+    return list(set(refs))
 
 
 def reverse_complement(seq):
@@ -61,18 +61,20 @@ def get_length_histogram(seqs, max_len = 1200):
 
 
 def approximate_match(p, t, threshold=EDIT_DIST_THRESHOLD):
-    '''approximate matching with edit distance (finding p in t)'''
+    '''approximate matching with edit distance'''
     pos = -1
     min_dist = len(p)
     for i in range(len(t) - len(p) + 1):
-        if editdistance.eval(t[i:i + len(p)], p) <= min_dist:
-            min_dist = editdistance.eval(t[i:i + len(p)], p)
+        ed = editdistance.eval(t[i:i + len(p)], p)
+        if ed <= min_dist:
+            min_dist = ed
             if min_dist <= threshold:
                 pos = i  
     return pos 
 
 
 def extract_noisy_copy(seq, ref, pos):
+    '''finding the most likely noisy copy of ref within sequence seq'''
     # TODO: this is very naive, should be optimized
     l = len(ref)
     p = pos
@@ -80,60 +82,37 @@ def extract_noisy_copy(seq, ref, pos):
     print(seq[p:p + l])
     print(min_dist)
     
-    # removing junks at the beginning
-    while True:
-        ed = editdistance.eval(seq[p+1:p+l], ref) 
-        if ed < min_dist:
-            print(ed)
-            p += 1
-            l -= 1
-            min_dist = ed
-        else:
-            break
+    for i in range(-10, 10):
+        for j in range(-10, 10):
+            ed = editdistance.eval(seq[pos+i:pos+l+j], ref)
+            if ed < min_dist:
+                min_dist = ed
+                l = len(seq[pos+i:pos+l+j])
+                p = pos+i
     print(seq[p:p + l])
-
-    # extending to cover potential omitted neucleotides
-    while True:
-        ed = editdistance.eval(seq[p:p+l+1], ref) 
-        if ed < min_dist:
-            print(ed)
-            l += 1
-            min_dist = ed
-        else:
-            break
-    print(seq[p:p + l])
-    
-    # removing junks at the end
-    while True:
-        ed = editdistance.eval(seq[p:p+l-1], ref)
-        if ed < min_dist:
-            print(ed)
-            l -= 1
-            min_dist = ed
-        else:
-            break     
-    print(seq[p:p + l])
-    
+    print(min_dist)
+    return seq[p:p + l]    
     
     
 def find_reference(seq, refs):
     '''find the reference strand for sequence seq'''
+    # TODO: how should we handle reverse complement refs? should they form one cluster?
     print('--------')
     for r in refs:
-        r_rev = reverse_complement(r)
+        s_rev = reverse_complement(seq)
         pos = approximate_match(r, seq)
         if pos != -1:
             print(pos)
             print("origin", r)
             print("strand", seq[pos:pos+len(r)])
-            return pos, r
+            return seq, r, pos
         else:
-            pos = approximate_match(r_rev, seq)
+            pos = approximate_match(r, s_rev)
             if pos != -1:
                 print(pos)
-                print("origin", r_rev)
-                print("strand", seq[pos:pos+len(r)])
-                return pos, r
+                print("origin", r)
+                print("strand", s_rev[pos:pos+len(r)])
+                return s_rev, r, pos
     return None
 
 
