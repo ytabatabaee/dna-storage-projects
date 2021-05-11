@@ -1,3 +1,1 @@
-# Research Statement
-
-My Research Statement
+# TBD
