@@ -1,6 +1,6 @@
 # DNA-Storage
 
-Codes & Reports for my DNA Storage (mini) Projects
+Codes & Reports for some of my DNA Storage mini-projects
 
 ## Projects
 1. Trace reconstruction codes (Optimized baseline, window-sliding + dynamic programming approaches) [Codes](http://rachmaninoff2.d2.comp.nus.edu.sg/ytabatabaee/trace-reconstruction-experiments/-/tree/master/trace_reconstruction)
